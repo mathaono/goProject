@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -11,7 +14,7 @@ const monitoramento = 3
 const delay = 3
 
 func main() {
-
+	lendoArquivos()
 	intro()
 
 	for {
@@ -62,10 +65,7 @@ func showAction() int {
 
 func iniciarMonitoramento() {
 	fmt.Println("Monitorando")
-	sites := []string{"https://www.alura.com.br",
-		"https://www.caelum.com.br",
-		"https://www.facebook.com",
-		"https://www.olhardigital.com.br"}
+	sites := lendoArquivos()
 
 	for i := 0; i < monitoramento; i++ {
 		for i, site := range sites {
@@ -78,10 +78,41 @@ func iniciarMonitoramento() {
 }
 
 func testaSites(site string) {
-	resp, _ := http.Get(site)
+	resp, error := http.Get(site)
+
+	if error != nil {
+		fmt.Println("Erro:", error)
+	}
+
 	if resp.StatusCode == 200 {
 		fmt.Println("Site: ", site, "carregado com sucesso!")
 	} else {
 		fmt.Println("Site: ", site, "com problemas! Status Code:", resp.StatusCode)
 	}
+}
+
+func lendoArquivos() []string {
+
+	var sites []string
+
+	arquivo, error := os.Open("sites.txt")
+
+	if error != nil {
+		fmt.Println("Erro:", error)
+	}
+
+	leitor := bufio.NewReader(arquivo)
+
+	for {
+		linha, error := leitor.ReadString('\n')
+		linha = strings.TrimSpace(linha)
+
+		sites = append(sites, linha)
+
+		if error == io.EOF {
+			break
+		}
+	}
+	arquivo.Close()
+	return sites
 }
